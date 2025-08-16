@@ -11,8 +11,18 @@ st.title("📊 Customer Churn Prediction Dashboard")
 
 df = pd.read_excel("Telco_customer_churn.xlsx")
 df.columns = df.columns.str.strip()
-df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
+
+st.write("Columns in dataset:", df.columns)
+st.write(df.head())
+
+if "TotalCharges" in df.columns:
+    df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
+
 df = df.dropna()
+
+if "Churn" not in df.columns:
+    st.error("Column 'Churn' not found in dataset!")
+    st.stop()
 
 st.subheader("Dataset Preview")
 st.dataframe(df.head())
@@ -30,53 +40,59 @@ with col1:
 
 with col2:
     st.subheader("Churn by Gender")
-    fig, ax = plt.subplots()
-    sns.countplot(x="gender", hue="Churn", data=df, ax=ax, palette="coolwarm")
-    ax.set_title("Churn by Gender")
-    fig.tight_layout()
-    st.pyplot(fig)
+    if "gender" in df.columns:
+        fig, ax = plt.subplots()
+        sns.countplot(x="gender", hue="Churn", data=df, ax=ax, palette="coolwarm")
+        ax.set_title("Churn by Gender")
+        fig.tight_layout()
+        st.pyplot(fig)
 
 st.markdown("### 👥 Customer Insights")
 col3, col4 = st.columns(2)
 
 with col3:
-    st.subheader("Churn by Contract Type")
-    fig, ax = plt.subplots()
-    sns.countplot(x="Contract", hue="Churn", data=df, ax=ax, palette="viridis")
-    plt.xticks(rotation=30)
-    fig.tight_layout()
-    st.pyplot(fig)
+    if "Contract" in df.columns:
+        st.subheader("Churn by Contract Type")
+        fig, ax = plt.subplots()
+        sns.countplot(x="Contract", hue="Churn", data=df, ax=ax, palette="viridis")
+        plt.xticks(rotation=30)
+        fig.tight_layout()
+        st.pyplot(fig)
 
 with col4:
-    st.subheader("Tenure vs Churn")
-    fig, ax = plt.subplots()
-    sns.histplot(data=df, x="tenure", hue="Churn", multiple="stack", bins=30, ax=ax, palette="Set1")
-    ax.set_title("Tenure vs Churn")
-    fig.tight_layout()
-    st.pyplot(fig)
+    if "tenure" in df.columns:
+        st.subheader("Tenure vs Churn")
+        fig, ax = plt.subplots()
+        sns.histplot(data=df, x="tenure", hue="Churn", multiple="stack", bins=30, ax=ax, palette="Set1")
+        ax.set_title("Tenure vs Churn")
+        fig.tight_layout()
+        st.pyplot(fig)
 
 st.markdown("### 💰 Financial Insights")
 col5, col6 = st.columns(2)
 
 with col5:
-    st.subheader("Monthly Charges vs Churn")
-    fig, ax = plt.subplots()
-    sns.boxplot(x="Churn", y="MonthlyCharges", data=df, ax=ax, palette="Set3")
-    ax.set_title("Monthly Charges vs Churn")
-    fig.tight_layout()
-    st.pyplot(fig)
+    if "MonthlyCharges" in df.columns:
+        st.subheader("Monthly Charges vs Churn")
+        fig, ax = plt.subplots()
+        sns.boxplot(x="Churn", y="MonthlyCharges", data=df, ax=ax, palette="Set3")
+        ax.set_title("Monthly Charges vs Churn")
+        fig.tight_layout()
+        st.pyplot(fig)
 
 with col6:
-    st.subheader("Total Charges vs Churn")
-    fig, ax = plt.subplots()
-    sns.boxplot(x="Churn", y="TotalCharges", data=df, ax=ax, palette="pastel")
-    ax.set_title("Total Charges vs Churn")
-    fig.tight_layout()
-    st.pyplot(fig)
+    if "TotalCharges" in df.columns:
+        st.subheader("Total Charges vs Churn")
+        fig, ax = plt.subplots()
+        sns.boxplot(x="Churn", y="TotalCharges", data=df, ax=ax, palette="pastel")
+        ax.set_title("Total Charges vs Churn")
+        fig.tight_layout()
+        st.pyplot(fig)
 
 st.markdown("### 🤖 Machine Learning Model")
 X = df.drop("Churn", axis=1)
 y = df["Churn"].map({"Yes": 1, "No": 0})
+
 X = pd.get_dummies(X, drop_first=True)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 model = RandomForestClassifier(n_estimators=100, random_state=42)
