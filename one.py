@@ -12,17 +12,21 @@ st.title("📊 Customer Churn Prediction Dashboard")
 df = pd.read_excel("Telco_customer_churn.xlsx")
 df.columns = df.columns.str.strip()
 
-st.write("Columns in dataset:", df.columns)
-st.write(df.head())
+# Detect 'Churn' column ignoring case
+churn_col = None
+for col in df.columns:
+    if col.strip().lower() == "churn":
+        churn_col = col
+        break
+
+if not churn_col:
+    st.error("Churn column not found in dataset!")
+    st.stop()
 
 if "TotalCharges" in df.columns:
     df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
 
 df = df.dropna()
-
-if "Churn" not in df.columns:
-    st.error("Column 'Churn' not found in dataset!")
-    st.stop()
 
 st.subheader("Dataset Preview")
 st.dataframe(df.head())
@@ -33,7 +37,7 @@ col1, col2 = st.columns(2)
 with col1:
     st.subheader("Churn Distribution")
     fig, ax = plt.subplots()
-    sns.countplot(x="Churn", data=df, ax=ax, palette="Set2")
+    sns.countplot(x=churn_col, data=df, ax=ax, palette="Set2")
     ax.set_title("Churn Distribution")
     fig.tight_layout()
     st.pyplot(fig)
@@ -42,7 +46,7 @@ with col2:
     st.subheader("Churn by Gender")
     if "gender" in df.columns:
         fig, ax = plt.subplots()
-        sns.countplot(x="gender", hue="Churn", data=df, ax=ax, palette="coolwarm")
+        sns.countplot(x="gender", hue=churn_col, data=df, ax=ax, palette="coolwarm")
         ax.set_title("Churn by Gender")
         fig.tight_layout()
         st.pyplot(fig)
@@ -54,7 +58,7 @@ with col3:
     if "Contract" in df.columns:
         st.subheader("Churn by Contract Type")
         fig, ax = plt.subplots()
-        sns.countplot(x="Contract", hue="Churn", data=df, ax=ax, palette="viridis")
+        sns.countplot(x="Contract", hue=churn_col, data=df, ax=ax, palette="viridis")
         plt.xticks(rotation=30)
         fig.tight_layout()
         st.pyplot(fig)
@@ -63,7 +67,7 @@ with col4:
     if "tenure" in df.columns:
         st.subheader("Tenure vs Churn")
         fig, ax = plt.subplots()
-        sns.histplot(data=df, x="tenure", hue="Churn", multiple="stack", bins=30, ax=ax, palette="Set1")
+        sns.histplot(data=df, x="tenure", hue=churn_col, multiple="stack", bins=30, ax=ax, palette="Set1")
         ax.set_title("Tenure vs Churn")
         fig.tight_layout()
         st.pyplot(fig)
@@ -75,7 +79,7 @@ with col5:
     if "MonthlyCharges" in df.columns:
         st.subheader("Monthly Charges vs Churn")
         fig, ax = plt.subplots()
-        sns.boxplot(x="Churn", y="MonthlyCharges", data=df, ax=ax, palette="Set3")
+        sns.boxplot(x=churn_col, y="MonthlyCharges", data=df, ax=ax, palette="Set3")
         ax.set_title("Monthly Charges vs Churn")
         fig.tight_layout()
         st.pyplot(fig)
@@ -84,14 +88,14 @@ with col6:
     if "TotalCharges" in df.columns:
         st.subheader("Total Charges vs Churn")
         fig, ax = plt.subplots()
-        sns.boxplot(x="Churn", y="TotalCharges", data=df, ax=ax, palette="pastel")
+        sns.boxplot(x=churn_col, y="TotalCharges", data=df, ax=ax, palette="pastel")
         ax.set_title("Total Charges vs Churn")
         fig.tight_layout()
         st.pyplot(fig)
 
 st.markdown("### 🤖 Machine Learning Model")
-X = df.drop("Churn", axis=1)
-y = df["Churn"].map({"Yes": 1, "No": 0})
+X = df.drop(churn_col, axis=1)
+y = df[churn_col].map({"Yes": 1, "No": 0})
 
 X = pd.get_dummies(X, drop_first=True)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
